@@ -275,29 +275,31 @@ class SwiftService < ServiceObject
 
     if not elements.has_key?("swift-storage") or elements["swift-storage"].length < 1
       errors << "Need at least one swift-storage node"
-    end
+    else
 
-    if elements["swift-storage"].length < proposal["attributes"]["swift"]["zones"]
-      if elements["swift-storage"].length == 1
-        errors << "Need at least as many swift-storage nodes as zones; only #{elements["swift-storage"].length} swift-storage node was set for #{proposal["attributes"]["swift"]["zones"]} zones"
-      else
-        errors << "Need at least as many swift-storage nodes as zones; only #{elements["swift-storage"].length} swift-storage nodes were set for #{proposal["attributes"]["swift"]["zones"]} zones"
+      if elements["swift-storage"].length < proposal["attributes"]["swift"]["zones"]
+        if elements["swift-storage"].length == 1
+          errors << "Need at least as many swift-storage nodes as zones; only #{elements["swift-storage"].length} swift-storage node was set for #{proposal["attributes"]["swift"]["zones"]} zones"
+        else
+          errors << "Need at least as many swift-storage nodes as zones; only #{elements["swift-storage"].length} swift-storage nodes were set for #{proposal["attributes"]["swift"]["zones"]} zones"
+        end
       end
-    end
 
-    elements["swift-storage"].each do |n|
-      node = NodeObject.find_node_by_name(n)
+      elements["swift-storage"].each do |n|
+        node = NodeObject.find_node_by_name(n)
 
       usable_disks = 0
       all_disks = eval(proposal["attributes"]["swift"]["disk_enum_expr"])
 
-      all_disks.each do |k,v|
-        usable_disks += 1 if eval(proposal["attributes"]["swift"]["disk_test_expr"])
+        all_disks.each do |k,v|
+          usable_disks += 1 if eval(proposal["attributes"]["swift"]["disk_test_expr"])
+        end
+
+        if usable_disks == 0
+          errors << "swift-storage nodes need at least one additional disk; #{n} does not have any"
+        end
       end
 
-      if usable_disks == 0
-        errors << "swift-storage nodes need at least one additional disk; #{n} does not have any"
-      end
     end
 
     if errors.length > 0
