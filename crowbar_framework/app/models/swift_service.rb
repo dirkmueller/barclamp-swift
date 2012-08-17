@@ -265,21 +265,23 @@ class SwiftService < ServiceObject
   def validate_proposal_after_save proposal
     super
 
+    errors = []
+
     if proposal["attributes"]["swift"]["replicas"] <= 0
-      raise Chef::Exceptions::ValidationFailed.new("Need at least 1 replica")
+      errors << "Need at least 1 replica"
     end
 
     elements = proposal["deployment"]["swift"]["elements"]
 
     if not elements.has_key?("swift-storage") or elements["swift-storage"].length < 1
-      raise Chef::Exceptions::ValidationFailed.new("Need at least one swift-storage node")
+      errors << "Need at least one swift-storage node"
     end
 
     if elements["swift-storage"].length < proposal["attributes"]["swift"]["zones"]
       if elements["swift-storage"].length == 1
-        raise Chef::Exceptions::ValidationFailed.new("Need at least as many swift-storage nodes as zones; only #{elements["swift-storage"].length} swift-storage node was set for #{proposal["attributes"]["swift"]["zones"]} zones")
+        errors << "Need at least as many swift-storage nodes as zones; only #{elements["swift-storage"].length} swift-storage node was set for #{proposal["attributes"]["swift"]["zones"]} zones"
       else
-        raise Chef::Exceptions::ValidationFailed.new("Need at least as many swift-storage nodes as zones; only #{elements["swift-storage"].length} swift-storage nodes were set for #{proposal["attributes"]["swift"]["zones"]} zones")
+        errors << "Need at least as many swift-storage nodes as zones; only #{elements["swift-storage"].length} swift-storage nodes were set for #{proposal["attributes"]["swift"]["zones"]} zones"
       end
     end
 
@@ -294,8 +296,12 @@ class SwiftService < ServiceObject
       end
 
       if usable_disks == 0
-        raise Chef::Exceptions::ValidationFailed.new("swift-storage nodes need at least one additional disk; #{n} does not have any")
+        errors << "swift-storage nodes need at least one additional disk; #{n} does not have any"
       end
+    end
+
+    if errors.length > 0
+      raise Chef::Exceptions::ValidationFailed.new(errors.join("<br/>"))
     end
   end
 
