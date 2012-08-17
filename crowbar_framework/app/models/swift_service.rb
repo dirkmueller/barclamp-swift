@@ -268,42 +268,41 @@ class SwiftService < ServiceObject
     errors = []
 
     if proposal["attributes"]["swift"]["replicas"] <= 0
-      errors << "Need at least 1 replica"
+      errors << "Need at least 1 replica."
     end
 
     elements = proposal["deployment"]["swift"]["elements"]
 
     if not elements.has_key?("swift-storage") or elements["swift-storage"].length < 1
-      errors << "Need at least one swift-storage node"
+      errors << "Need at least one swift-storage node."
     else
 
       if elements["swift-storage"].length < proposal["attributes"]["swift"]["zones"]
         if elements["swift-storage"].length == 1
-          errors << "Need at least as many swift-storage nodes as zones; only #{elements["swift-storage"].length} swift-storage node was set for #{proposal["attributes"]["swift"]["zones"]} zones"
+          errors << "Need at least as many swift-storage nodes as zones; only #{elements["swift-storage"].length} swift-storage node was set for #{proposal["attributes"]["swift"]["zones"]} zones."
         else
-          errors << "Need at least as many swift-storage nodes as zones; only #{elements["swift-storage"].length} swift-storage nodes were set for #{proposal["attributes"]["swift"]["zones"]} zones"
+          errors << "Need at least as many swift-storage nodes as zones; only #{elements["swift-storage"].length} swift-storage nodes were set for #{proposal["attributes"]["swift"]["zones"]} zones."
         end
       end
 
       elements["swift-storage"].each do |n|
         node = NodeObject.find_node_by_name(n)
 
-      usable_disks = 0
-      all_disks = eval(proposal["attributes"]["swift"]["disk_enum_expr"])
+        usable_disks = 0
+        all_disks = eval(proposal["attributes"]["swift"]["disk_enum_expr"])
 
         all_disks.each do |k,v|
           usable_disks += 1 if eval(proposal["attributes"]["swift"]["disk_test_expr"])
         end
 
         if usable_disks == 0
-          errors << "swift-storage nodes need at least one additional disk; #{n} does not have any"
+          errors << "Node #{n} does not have any additional disk; swift-storage nodes need at least one."
         end
       end
-
     end
 
     if errors.length > 0
-      raise Chef::Exceptions::ValidationFailed.new(errors.join("<br/>"))
+      raise Chef::Exceptions::ValidationFailed.new(errors.join("\n"))
     end
   end
 
